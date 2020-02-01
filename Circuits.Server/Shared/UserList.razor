@@ -1,0 +1,31 @@
+﻿@using Microsoft.AspNetCore.Components.Server.Circuits
+@inject CircuitHandler handler
+@if (handler is TrackingCircuitHandler thandler)
+{
+    <div class="flex-column">
+        @foreach (var user in thandler.Users)
+        {
+            <div class=@UserClass(user)>@user</div>
+        }
+    </div>
+}
+@code
+{
+    string NewUser = "";
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (handler is TrackingCircuitHandler thandler && thandler.GetCircuit() is object)
+            {
+                thandler.WatchUsers(user =>
+                {
+                    NewUser = user;
+                    InvokeAsync(StateHasChanged);
+                });
+            }
+            StateHasChanged();
+        }
+    }
+    string UserClass(string user) => user == NewUser ? "alert-success" : "alert-primary";
+}

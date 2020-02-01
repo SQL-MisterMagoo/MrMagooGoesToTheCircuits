@@ -1,0 +1,22 @@
+﻿@using Microsoft.AspNetCore.Components.Server.Circuits
+@using GenFu
+@inject CircuitHandler handler
+@code
+{
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (handler is TrackingCircuitHandler thandler && thandler.GetCircuit() is object)
+            {
+                var genfu = A.New<Person>();
+                var user = genfu.FirstName;
+                _ = await thandler.AddUser(user);
+            }
+        }
+    }
+    class Person
+    {
+        public string FirstName { get; set; }
+    }
+}
