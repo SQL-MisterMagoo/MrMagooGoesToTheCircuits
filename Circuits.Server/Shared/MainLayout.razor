@@ -2,10 +2,13 @@
 
 <div class="sidebar">
     <NavMenu />
+    <UserList />
 </div>
 
 <div class="main">
-    <div class="top-row px-4">
+    <div class="top-row px-4 d-flex justify-content-between">
+      <span>Your address is @ClientIP</span>
+      <TrackingComponent />
         <a href="https://docs.microsoft.com/aspnet/" target="_blank">About</a>
     </div>
 
@@ -13,3 +16,8 @@
         @Body
     </div>
 </div>
+
+@code
+{
+		[CascadingParameter(Name ="ClientIP")] public string ClientIP { get; set; }
+}

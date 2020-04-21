@@ -5,7 +5,7 @@
     <div class="flex-column">
         @foreach (var user in thandler.Users)
         {
-            <div class=@UserClass(user)>@user</div>
+            <span @key="user" class=@UserClass(user)>@user</span>
         }
     </div>
 }

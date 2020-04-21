@@ -13,6 +13,7 @@ using Circuits.Server.Data;
 using Microsoft.AspNetCore.Components.Server.Circuits;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.HttpOverrides;
 
 namespace Circuits.Server
 {
@@ -32,7 +33,9 @@ namespace Circuits.Server
             services.AddRazorPages();
             services.AddServerSideBlazor(options =>
             {
-                options.DetailedErrors = true;                
+                options.DetailedErrors = true;
+                options.DisconnectedCircuitRetentionPeriod = TimeSpan.FromSeconds(5);
+                
             });
             foreach (var item in services)
             {
@@ -41,7 +44,7 @@ namespace Circuits.Server
                     Console.WriteLine($"Service: {item.ServiceType.FullName} {item.Lifetime}");
                 }
             }
-            services.AddSingleton<CircuitHandler, TrackingCircuitHandler>();
+            services.AddScoped<CircuitHandler, TrackingCircuitHandler>();
             services.AddSingleton<WeatherForecastService>();
         }
 
@@ -58,7 +61,12 @@ namespace Circuits.Server
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
-
+            var forwardingOptions = 
+                new ForwardedHeadersOptions() 
+                { 
+                    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.All 
+                }; 
+            app.UseForwardedHeaders(forwardingOptions);
             app.UseHttpsRedirection();
             app.UseStaticFiles();
 

@@ -33,7 +33,7 @@ namespace Circuits.Server
         {
             if (CircuitID is object)
             {
-                CircuitUsers[CircuitID] = user;
+                CircuitUsers[CircuitID] = $"{user}";
             }
             if (action is object)
             {
@@ -59,7 +59,7 @@ namespace Circuits.Server
         {
             await Task.Factory.StartNew(() =>
             {
-                foreach (var notification in Notifications.Where(x => x.Key != CircuitID))
+                foreach (var notification in Notifications)
                 {
                     notification.Value?.Invoke(user);
                 }
