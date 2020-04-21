@@ -1,0 +1,34 @@
+﻿@using Microsoft.AspNetCore.Components.Server.Circuits
+@using GenFu
+@inject CircuitHandler handler
+
+	<label for="nickname">Nickname: </label><input id="nickname" maxlength="20" @bind="@UserName" @bind:event="oninput" />
+@code
+{
+		string _userName;
+		string UserName { get=>_userName; set { _userName = value; InvokeAsync(async () => await RegisterUser(value)); } }
+
+		protected override void OnInitialized()
+		{
+				if (handler is TrackingCircuitHandler thandler && thandler.GetCircuit() is object)
+				{
+					var genfu = A.New<Person>();
+					UserName = genfu.FirstName;
+				}
+		}
+
+		async Task RegisterUser(string name)
+		{
+			if (!string.IsNullOrWhiteSpace(name))
+			{
+				if (handler is TrackingCircuitHandler thandler && thandler.GetCircuit() is object)
+				{
+					_ = await thandler.AddUser(name);
+				}
+			}
+		}
+		class Person
+		{
+			public string FirstName { get; set; }
+		}
+}

@@ -10,6 +10,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Circuits.Server.Data;
+using Microsoft.AspNetCore.Components.Server.Circuits;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.HttpOverrides;
 
 namespace Circuits.Server
 {
@@ -27,7 +31,20 @@ namespace Circuits.Server
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddRazorPages();
-            services.AddServerSideBlazor();
+            services.AddServerSideBlazor(options =>
+            {
+                options.DetailedErrors = true;
+                options.DisconnectedCircuitRetentionPeriod = TimeSpan.FromSeconds(5);
+                
+            });
+            foreach (var item in services)
+            {
+                if (item.ServiceType.FullName.Contains("Circuit"))
+                {
+                    Console.WriteLine($"Service: {item.ServiceType.FullName} {item.Lifetime}");
+                }
+            }
+            services.AddScoped<CircuitHandler, TrackingCircuitHandler>();
             services.AddSingleton<WeatherForecastService>();
         }
 
@@ -44,12 +61,17 @@ namespace Circuits.Server
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
-
+            var forwardingOptions = 
+                new ForwardedHeadersOptions() 
+                { 
+                    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.All 
+                }; 
+            app.UseForwardedHeaders(forwardingOptions);
             app.UseHttpsRedirection();
             app.UseStaticFiles();
 
             app.UseRouting();
-
+            app.UseAuthentication();
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapBlazorHub();
