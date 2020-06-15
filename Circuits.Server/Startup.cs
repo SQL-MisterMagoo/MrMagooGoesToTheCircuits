@@ -34,16 +34,10 @@ namespace Circuits.Server
             services.AddServerSideBlazor(options =>
             {
                 options.DetailedErrors = true;
-                options.DisconnectedCircuitRetentionPeriod = TimeSpan.FromSeconds(5);
-                
+                options.DisconnectedCircuitRetentionPeriod = TimeSpan.FromSeconds(15);
+                options.JSInteropDefaultCallTimeout = TimeSpan.FromSeconds(1);
+                options.MaxBufferedUnacknowledgedRenderBatches = 2;
             });
-            foreach (var item in services)
-            {
-                if (item.ServiceType.FullName.Contains("Circuit"))
-                {
-                    Console.WriteLine($"Service: {item.ServiceType.FullName} {item.Lifetime}");
-                }
-            }
             services.AddScoped<CircuitHandler, TrackingCircuitHandler>();
             services.AddSingleton<WeatherForecastService>();
         }

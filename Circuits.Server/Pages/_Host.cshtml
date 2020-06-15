@@ -2,35 +2,113 @@
 @namespace Circuits.Server.Pages
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 @{
-    Layout = null;
+	Layout = null;
 }
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Circuits.Server</title>
-    <base href="~/" />
-    <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
-    <link href="css/site.css" rel="stylesheet" />
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Circuits.Server</title>
+	<base href="~/" />
+	<link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
+	<link href="css/site.css" rel="stylesheet" />
 </head>
 <body>
-    <app>
-        <component type="typeof(App)" render-mode="ServerPrerendered" param-ClientIP="@HttpContext.Connection.RemoteIpAddress.ToString()" />
-    </app>
+	<app>
+		<component type="typeof(App)" render-mode="ServerPrerendered" param-ClientIP="@HttpContext.Connection.RemoteIpAddress.ToString()" />
+	</app>
 
-    <div id="blazor-error-ui">
-        <environment include="Staging,Production">
-            An error has occurred. This application may no longer respond until reloaded.
-        </environment>
-        <environment include="Development">
-            An unhandled exception has occurred. See browser dev tools for details.
-        </environment>
-        <a href="" class="reload">Reload</a>
-        <a class="dismiss">🗙</a>
-    </div>
+	<div id="blazor-error-ui">
+		<environment include="Staging,Production">
+			An error has occurred. This application may no longer respond until reloaded.
+		</environment>
+		<environment include="Development">
+			An unhandled exception has occurred. See browser dev tools for details.
+		</environment>
+		<a href="" class="reload">Reload</a>
+		<a class="dismiss">🗙</a>
+	</div>
 
-    <script src="_framework/blazor.server.js"></script>
+	<script autostart="false" src="js/blazor.server.js"></script>
+	<script>
+		async function connectionDown(options) {
+			console.log("Connection Down - you could do some UI here...");
+
+			if (window.Navigator.onLine === false) {
+				console.log("Waiting for network ...");
+				while (window.Navigator.onLine === false && this.isDisposed === false)
+					await this.delay(options.retryIntervalMilliseconds);
+			}
+
+			for (let i = 0; i < options.maxRetries; i++) {
+				console.log("Waiting for reconnect attempt #" + (i + 1) + " ...");
+				await this.delay(options.retryIntervalMilliseconds);
+				if (this.isDisposed) {
+					break;
+				}
+
+				try {
+					// reconnectCallback will asynchronously return:
+					// - true to mean success
+					// - false to mean we reached the server, but it rejected the connection (e.g., unknown circuit ID)
+					// - exception to mean we didn't reach the server (this can be sync or async)
+					console.log("Starting Reconnect attempt #" + (i + 1) + " ...");
+					const result = await window.Blazor.reconnect();
+					if (result === false) {
+						// If the server responded and refused to reconnect, log it
+						console.error("Server Rejected");
+						break;
+					} else {
+						// Reconnected!
+						return;
+					}
+				} catch (err) {
+					// We got an exception so will try again
+					console.error(err);
+				}
+			}
+			// all attempts failed - let's try a full reload
+			// This could be a UI change instead or something more complicated
+			location.reload();
+		}
+
+		function delay(durationMilliseconds) {
+			return new Promise(resolve => setTimeout(resolve, durationMilliseconds));
+		}
+
+		function connectionUp(e) {
+			// Reconnected
+			console.log("Connection UP!",e);
+			// if you have a UI to hide/change you can do that here.
+			let rc = window.Blazor.reconnect;
+			delete window.Blazor.reconnect;
+			window.Blazor.reconnect = function (a) {
+				console.log(a);
+				return rc(a);
+			}
+		}
+
+		window.Blazor.start({
+			configureSignalR: function (builder) {
+				window.magoo = { builder };
+				builder.httpConnectionOptions.logger = console;
+			},
+			configureConnection: function (hub) {
+				window.hub = hub;
+				hub.serverTimeoutInMilliseconds = 30000;
+				console.log(hub);
+			},
+			reconnectionOptions: {
+				maxRetries: 10,
+				retryIntervalMilliseconds: 500,
+			},
+			reconnectionHandler: {
+				onConnectionDown: e => connectionDown(e),
+				onConnectionUp: e => connectionUp(e)
+			}
+		});
+	</script>
 </body>
 </html>

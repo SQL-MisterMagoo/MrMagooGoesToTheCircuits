@@ -1,20 +1,23 @@
 ﻿@using Microsoft.AspNetCore.Components.Server.Circuits
 @using GenFu
 @inject CircuitHandler handler
-
-	<label for="nickname">Nickname: </label><input id="nickname" maxlength="20" @bind="@UserName" @bind:event="oninput" />
+<aside @attributes="@AdditionalAttributes">
+	<label for="nickname">Nickname: </label><input id="nickname" style="width:5em;" maxlength="20" @bind="@UserName" @bind:event="oninput" />
+</aside>	
 @code
 {
+		[Parameter(CaptureUnmatchedValues = true)]
+		public IReadOnlyDictionary<string, object> AdditionalAttributes { get; set; }
 		string _userName;
 		string UserName { get=>_userName; set { _userName = value; InvokeAsync(async () => await RegisterUser(value)); } }
 
 		protected override void OnInitialized()
 		{
-				if (handler is TrackingCircuitHandler thandler && thandler.GetCircuit() is object)
-				{
-					var genfu = A.New<Person>();
-					UserName = genfu.FirstName;
-				}
+			if (handler is TrackingCircuitHandler thandler && thandler.GetCircuit() is object)
+			{
+				var genfu = A.New<Person>();
+				UserName = genfu.FirstName;
+			}
 		}
 
 		async Task RegisterUser(string name)

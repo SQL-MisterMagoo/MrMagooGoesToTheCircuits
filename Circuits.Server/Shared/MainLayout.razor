@@ -1,23 +1,23 @@
 ﻿@inherits LayoutComponentBase
 
 <div class="sidebar">
-    <NavMenu />
-    <UserList />
+	<NavMenu />
+	<UserList />
 </div>
 
 <div class="main">
-    <div class="top-row px-4 d-flex justify-content-between">
-      <span>Your address is @ClientIP</span>
-      <TrackingComponent />
-        <a href="https://docs.microsoft.com/aspnet/" target="_blank">About</a>
-    </div>
+	<div class="top-row px-4 d-flex justify-content-between">
+		<span>Your address is @ClientIP</span>
+		<TrackingComponent />
+		<a href="https://docs.microsoft.com/aspnet/" target="_blank">About</a>
+	</div>
 
-    <div class="content px-4">
-        @Body
-    </div>
+	<div class="content px-4">
+		@Body
+	</div>
 </div>
 
 @code
 {
-		[CascadingParameter(Name ="ClientIP")] public string ClientIP { get; set; }
+	[CascadingParameter(Name = "ClientIP")] public string ClientIP { get; set; }
 }
